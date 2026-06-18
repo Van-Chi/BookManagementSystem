@@ -1,0 +1,18 @@
+-------------------------------------------------------------------------------
+Test set: com.library.controller.BookControllerIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.147 s <<< FAILURE! -- in com.library.controller.BookControllerIntegrationTest
+com.library.controller.BookControllerIntegrationTest.luongCrudHoanChinh_TaoDocCapNhatXoaSach_ThanhCong -- Time elapsed: 0.065 s <<< FAILURE!
+java.lang.AssertionError: 
+JSON path "$"
+Expected: a collection with size <1>
+     but: collection size was <2>
+	at org.hamcrest.MatcherAssert.assertThat(MatcherAssert.java:20)
+	at org.springframework.test.util.JsonPathExpectationsHelper.assertValue(JsonPathExpectationsHelper.java:74)
+	at org.springframework.test.web.servlet.result.JsonPathResultMatchers.lambda$value$0(JsonPathResultMatchers.java:87)
+	at org.springframework.test.web.servlet.MockMvc$1.andExpect(MockMvc.java:214)
+	at com.library.controller.BookControllerIntegrationTest.luongCrudHoanChinh_TaoDocCapNhatXoaSach_ThanhCong(BookControllerIntegrationTest.java:71)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+

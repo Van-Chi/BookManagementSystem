@@ -1,0 +1,31 @@
+# Profile "local": dung Database H2 luu file tren dia, phuc vu chay thu/
+# kiem tra ung dung nhanh tren may dev ma khong can cai dat PostgreSQL/MySQL.
+# Kich hoat bang: --spring.profiles.active=local
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/library_db;MODE=PostgreSQL;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # PHAI override lai dialect: gia tri PostgreSQLDialect tu application.yml
+        # goc se bi ke thua (profile chi merge, khong thay the file goc) neu
+        # khong khai bao lai o day, khien Hibernate sinh cau lenh
+        # "INSERT ... RETURNING id" (chuan Postgres) ma H2 khong ho tro day du,
+        # gay loi 500 khi insert du lieu.
+        dialect: org.hibernate.dialect.H2Dialect
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+jwt:
+  refresh-expiration-ms: 604800000
