@@ -5,10 +5,22 @@ spring:
   application:
     name: book-management-system
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:disabled}
+            client-secret: ${GOOGLE_CLIENT_SECRET:disabled}
+            scope:
+              - openid
+              - profile
+              - email
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/library_db
-    username: postgres
-    password: postgres
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/library_db}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -24,6 +36,19 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 # Cau hinh JWT cho co che Authentication.
 # jwt.secret PHAI duoc thay the bang mot gia tri bi mat thuc su va luu qua
 # bien moi truong (environment variable) trong moi truong production,
@@ -33,6 +58,14 @@ jwt:
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   # Refresh token song 7 ngay (7 * 24 * 60 * 60 * 1000 = 604800000 ms)
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+rate-limit:
+  authenticated-requests-per-minute: 60
+  anonymous-requests-per-minute: 20
+  auth-requests-per-minute: 5
+
+oauth2:
+  redirect-url: ${OAUTH2_REDIRECT_URL:http://localhost:3000/oauth2/callback}
 
 logging:
   level:

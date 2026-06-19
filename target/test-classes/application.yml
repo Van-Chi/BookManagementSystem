@@ -1,4 +1,13 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            scope: openid, profile, email
+
   datasource:
     url: jdbc:h2:mem:library_test_db;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     username: sa
@@ -13,3 +22,13 @@ spring:
 jwt:
   secret: dGhpcy1pcy1hLXZlcnktbG9uZy1zZWNyZXQta2V5LWZvci1saWJyYXJ5LW1hbmFnZW1lbnQtc3lzdGVtLWp3dC1zaWduaW5n
   expiration-ms: 86400000
+  refresh-expiration-ms: 604800000
+
+scheduling:
+  enabled: false
+
+# Gioi han cao trong test de cac integration test cu khong bi chan boi rate limiting
+rate-limit:
+  authenticated-requests-per-minute: 1000
+  anonymous-requests-per-minute: 1000
+  auth-requests-per-minute: 1000

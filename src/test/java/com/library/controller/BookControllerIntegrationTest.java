@@ -2,16 +2,19 @@ package com.library.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.library.dto.BookRequestDTO;
+import com.library.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,6 +38,9 @@ class BookControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private EmailService emailService;
 
     @Test
     void luongCrudHoanChinh_TaoDocCapNhatXoaSach_ThanhCong() throws Exception {
@@ -65,10 +71,11 @@ class BookControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isbn").value("9780134685991"));
 
-        // 3. Lay danh sach toan bo sach -> co chua sach vua tao
+        // 3. Lay danh sach toan bo sach -> co chua sach vua tao (tra ve Page)
         mockMvc.perform(get("/api/books"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements", is(1)));
 
         // 4. Cap nhat sach
         BookRequestDTO updateRequest = BookRequestDTO.builder()
@@ -141,5 +148,91 @@ class BookControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void searchBooks_VoiKeyword_ChiTraVeSachKhop() throws Exception {
+        taoSach("Effective Java", "Joshua Bloch", "9780134685991", 3, "Cong nghe thong tin");
+        taoSach("Design Patterns", "Gang of Four", "9780201633610", 2, "Kien truc phan mem");
+
+        mockMvc.perform(get("/api/books").param("keyword", "java"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is("Effective Java")))
+                .andExpect(jsonPath("$.totalElements", is(1)));
+    }
+
+    @Test
+    void searchBooks_VoiCategory_ChiTraVeSachCungTheLoai() throws Exception {
+        taoSach("Effective Java", "Joshua Bloch", "9780134685991", 3, "Cong nghe thong tin");
+        taoSach("Design Patterns", "Gang of Four", "9780201633610", 2, "Kien truc phan mem");
+
+        mockMvc.perform(get("/api/books").param("category", "Kien truc phan mem"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is("Design Patterns")));
+    }
+
+    @Test
+    void searchBooks_VoiAvailableTrue_ChiTraVeSachConKhaDung() throws Exception {
+        taoSach("Effective Java", "Joshua Bloch", "9780134685991", 3, "CNTT");
+        taoSach("Sach Het", "Tac Gia A", "9780000000001", 0, "CNTT");
+
+        mockMvc.perform(get("/api/books").param("available", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is("Effective Java")));
+    }
+
+    @Test
+    void searchBooks_VoiKeywordVaCategory_LocKetHopChinhXac() throws Exception {
+        taoSach("Effective Java", "Joshua Bloch", "9780134685991", 3, "Cong nghe thong tin");
+        taoSach("Java Performance", "Scott Oaks", "9781449358457", 2, "Cong nghe thong tin");
+        taoSach("Design Patterns", "Gang of Four", "9780201633610", 2, "Kien truc phan mem");
+
+        mockMvc.perform(get("/api/books")
+                        .param("keyword", "java")
+                        .param("category", "Cong nghe thong tin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements", is(2)));
+    }
+
+    @Test
+    void searchBooks_VoiPhanTrang_TraVeMetadataDung() throws Exception {
+        taoSach("Book A", "Author 1", "9780000000011", 1, "CNTT");
+        taoSach("Book B", "Author 2", "9780000000012", 1, "CNTT");
+        taoSach("Book C", "Author 3", "9780000000013", 1, "CNTT");
+
+        mockMvc.perform(get("/api/books").param("size", "2").param("page", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements", is(3)))
+                .andExpect(jsonPath("$.totalPages", is(2)))
+                .andExpect(jsonPath("$.size", is(2)));
+    }
+
+    @Test
+    void searchBooks_KhongCoFilter_TraVeToanBoSach() throws Exception {
+        taoSach("Effective Java", "Joshua Bloch", "9780134685991", 3, "CNTT");
+        taoSach("Design Patterns", "Gang of Four", "9780201633610", 2, "CNTT");
+
+        mockMvc.perform(get("/api/books"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements", is(2)));
+    }
+
+    private void taoSach(String title, String author, String isbn, int totalCopies, String category) throws Exception {
+        BookRequestDTO req = BookRequestDTO.builder()
+                .title(title)
+                .author(author)
+                .isbn(isbn)
+                .totalCopies(totalCopies)
+                .category(category)
+                .build();
+        mockMvc.perform(post("/api/books")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)));
     }
 }

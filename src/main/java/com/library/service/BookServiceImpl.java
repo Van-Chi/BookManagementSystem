@@ -6,12 +6,14 @@ import com.library.entity.Book;
 import com.library.exception.DuplicateResourceException;
 import com.library.exception.ResourceNotFoundException;
 import com.library.repository.BookRepository;
+import com.library.repository.BookSpecification;
+import com.library.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Trien khai cac nghiep vu CRUD cho Book.
@@ -26,6 +28,7 @@ public class BookServiceImpl implements BookService {
     private static final String RESOURCE_NAME = "Book";
 
     private final BookRepository bookRepository;
+    private final ReviewRepository reviewRepository;
 
     @Override
     @Transactional
@@ -58,11 +61,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookResponseDTO> getAllBooks() {
-        return bookRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookResponseDTO> searchBooks(String keyword, String category, Boolean available, Pageable pageable) {
+        Specification<Book> spec = BookSpecification.withFilters(keyword, category, available);
+        return bookRepository.findAll(spec, pageable).map(this::mapToResponseDTO);
     }
 
     @Override
@@ -121,8 +122,12 @@ public class BookServiceImpl implements BookService {
 
     /**
      * Chuyen doi Entity Book sang BookResponseDTO de tra ve cho Client.
+     * Bao gom averageRating va reviewCount tu bang reviews.
      */
     private BookResponseDTO mapToResponseDTO(Book book) {
+        Double averageRating = reviewRepository.findAverageRatingByBookId(book.getId()).orElse(null);
+        long reviewCount = reviewRepository.countByBookId(book.getId());
+
         return BookResponseDTO.builder()
                 .id(book.getId())
                 .title(book.getTitle())
@@ -131,6 +136,8 @@ public class BookServiceImpl implements BookService {
                 .totalCopies(book.getTotalCopies())
                 .availableCopies(book.getAvailableCopies())
                 .category(book.getCategory())
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
                 .build();
     }
 }

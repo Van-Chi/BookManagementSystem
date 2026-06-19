@@ -6,12 +6,18 @@ import com.library.entity.Book;
 import com.library.exception.DuplicateResourceException;
 import com.library.exception.ResourceNotFoundException;
 import com.library.repository.BookRepository;
+import com.library.repository.ReviewRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +25,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +43,9 @@ class BookServiceImplTest {
 
     @Mock
     private BookRepository bookRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private BookServiceImpl bookService;
@@ -62,6 +73,10 @@ class BookServiceImplTest {
                 .totalCopies(5)
                 .category("Cong nghe thong tin")
                 .build();
+
+        // mapToResponseDTO goi reviewRepository de lay averageRating va reviewCount
+        lenient().when(reviewRepository.findAverageRatingByBookId(anyLong())).thenReturn(Optional.empty());
+        lenient().when(reviewRepository.countByBookId(anyLong())).thenReturn(0L);
     }
 
     @Test
@@ -109,13 +124,78 @@ class BookServiceImplTest {
     }
 
     @Test
-    void getAllBooks_TraVeDanhSachBookResponseDTO() {
-        when(bookRepository.findAll()).thenReturn(List.of(sampleBook));
+    void searchBooks_KhongCoFilter_TraVeToanBoSach() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(bookRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleBook), pageable, 1));
 
-        List<BookResponseDTO> result = bookService.getAllBooks();
+        Page<BookResponseDTO> result = bookService.searchBooks(null, null, null, pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Clean Code");
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Clean Code");
+    }
+
+    @Test
+    void searchBooks_VoiKeyword_ChiTraVeSachKhop() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(bookRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleBook), pageable, 1));
+
+        Page<BookResponseDTO> result = bookService.searchBooks("clean", null, null, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Clean Code");
+    }
+
+    @Test
+    void searchBooks_VoiCategory_ChiTraVeSachCungTheLoai() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(bookRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleBook), pageable, 1));
+
+        Page<BookResponseDTO> result = bookService.searchBooks(null, "Cong nghe thong tin", null, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getCategory()).isEqualTo("Cong nghe thong tin");
+    }
+
+    @Test
+    void searchBooks_VoiAvailableTrue_ChiTraVeSachConKhaDung() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(bookRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleBook), pageable, 1));
+
+        Page<BookResponseDTO> result = bookService.searchBooks(null, null, true, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getAvailableCopies()).isGreaterThan(0);
+    }
+
+    @Test
+    void searchBooks_KhiKhongCoBanGhi_TraVePageRong() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(bookRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(Page.empty(pageable));
+
+        Page<BookResponseDTO> result = bookService.searchBooks("xyz_khong_ton_tai", null, null, pageable);
+
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getContent()).isEmpty();
+    }
+
+    @Test
+    void searchBooks_VoiPhanTrang_TraVeMetadataDung() {
+        Pageable pageable = PageRequest.of(0, 2);
+        Book book2 = Book.builder().id(2L).title("Effective Java").author("Joshua Bloch")
+                .isbn("9780134685991").totalCopies(3).availableCopies(3).category("CNTT").version(0L).build();
+        when(bookRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleBook, book2), pageable, 5));
+
+        Page<BookResponseDTO> result = bookService.searchBooks(null, null, null, pageable);
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(5);
+        assertThat(result.getTotalPages()).isEqualTo(3);
     }
 
     @Test

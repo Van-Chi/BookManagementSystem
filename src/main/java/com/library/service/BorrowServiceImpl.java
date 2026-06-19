@@ -36,6 +36,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final BorrowRecordRepository borrowRecordRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -68,6 +69,7 @@ public class BorrowServiceImpl implements BorrowService {
                 .build();
 
         BorrowRecord savedRecord = borrowRecordRepository.save(borrowRecord);
+        emailService.sendBorrowConfirmation(user, book, savedRecord);
         return mapToResponseDTO(savedRecord);
     }
 
@@ -82,6 +84,7 @@ public class BorrowServiceImpl implements BorrowService {
                     String.format("Phieu muon id=%d da duoc tra truoc do", borrowRecordId));
         }
 
+        User user = borrowRecord.getUser();
         Book book = borrowRecord.getBook();
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
@@ -89,7 +92,7 @@ public class BorrowServiceImpl implements BorrowService {
         borrowRecord.setReturnDate(LocalDate.now());
         borrowRecord.setStatus(BorrowStatus.RETURNED);
         BorrowRecord updatedRecord = borrowRecordRepository.save(borrowRecord);
-
+        emailService.sendReturnConfirmation(user, book, updatedRecord);
         return mapToResponseDTO(updatedRecord);
     }
 

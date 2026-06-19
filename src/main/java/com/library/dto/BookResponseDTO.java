@@ -28,4 +28,8 @@ public class BookResponseDTO {
     private Integer availableCopies;
 
     private String category;
+
+    private Double averageRating;
+
+    private Long reviewCount;
 }

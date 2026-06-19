@@ -47,6 +47,9 @@ class BorrowServiceImplTest {
     @Mock
     private BorrowRecordRepository borrowRecordRepository;
 
+    @Mock
+    private EmailService emailService;
+
     private BorrowServiceImpl borrowService;
 
     private Book sampleBook;
@@ -54,7 +57,7 @@ class BorrowServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        borrowService = new BorrowServiceImpl(bookRepository, userRepository, borrowRecordRepository);
+        borrowService = new BorrowServiceImpl(bookRepository, userRepository, borrowRecordRepository, emailService);
 
         sampleBook = Book.builder()
                 .id(1L)
