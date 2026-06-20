@@ -29,6 +29,8 @@ public class BookResponseDTO {
 
     private String category;
 
+    private String description;
+
     private Double averageRating;
 
     private Long reviewCount;

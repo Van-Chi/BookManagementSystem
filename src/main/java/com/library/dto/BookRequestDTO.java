@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,4 +42,8 @@ public class BookRequestDTO {
     @Schema(description = "Thể loại sách", example = "Công nghệ thông tin")
     @NotBlank(message = "The loai sach (category) khong duoc de trong")
     private String category;
+
+    @Schema(description = "Giới thiệu/tóm tắt nội dung sách", example = "Cuốn sách giới thiệu...")
+    @Size(max = 4000, message = "Gioi thieu sach khong duoc vuot qua 4000 ky tu")
+    private String description;
 }

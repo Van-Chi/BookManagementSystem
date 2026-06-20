@@ -57,6 +57,7 @@ config/       Cấu hình Spring Security, JWT, Beans...
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 Google | `disabled` |
 | `MAIL_HOST` / `MAIL_PORT` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Cấu hình SMTP gửi mail | `smtp.gmail.com` / `587` |
 | `OAUTH2_REDIRECT_URL` | URL redirect sau khi OAuth2 login | `http://localhost:3000/oauth2/callback` |
+| `CORS_ALLOWED_ORIGINS` | Danh sách origin được phép gọi API (phân tách bằng dấu phẩy), phục vụ frontend chạy trên domain/port khác | `http://localhost:3000` |
 
 ## Cách chạy dự án
 

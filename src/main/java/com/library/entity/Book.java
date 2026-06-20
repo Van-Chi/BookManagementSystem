@@ -46,6 +46,9 @@ public class Book {
     @Column(name = "category", length = 100)
     private String category;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     /**
      * Dung cho co che Optimistic Locking cua JPA/Hibernate.
      * Gia tri nay duoc Hibernate tu dong tang moi khi entity duoc update,

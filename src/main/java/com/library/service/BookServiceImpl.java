@@ -46,6 +46,7 @@ public class BookServiceImpl implements BookService {
                 .totalCopies(requestDTO.getTotalCopies())
                 .availableCopies(requestDTO.getTotalCopies())
                 .category(requestDTO.getCategory())
+                .description(requestDTO.getDescription())
                 .build();
 
         Book savedBook = bookRepository.save(book);
@@ -100,6 +101,7 @@ public class BookServiceImpl implements BookService {
         existingBook.setTotalCopies(requestDTO.getTotalCopies());
         existingBook.setAvailableCopies(newAvailableCopies);
         existingBook.setCategory(requestDTO.getCategory());
+        existingBook.setDescription(requestDTO.getDescription());
 
         Book updatedBook = bookRepository.save(existingBook);
         return mapToResponseDTO(updatedBook);
@@ -136,6 +138,7 @@ public class BookServiceImpl implements BookService {
                 .totalCopies(book.getTotalCopies())
                 .availableCopies(book.getAvailableCopies())
                 .category(book.getCategory())
+                .description(book.getDescription())
                 .averageRating(averageRating)
                 .reviewCount(reviewCount)
                 .build();

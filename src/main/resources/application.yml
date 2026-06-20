@@ -67,6 +67,9 @@ rate-limit:
 oauth2:
   redirect-url: ${OAUTH2_REDIRECT_URL:http://localhost:3000/oauth2/callback}
 
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
 logging:
   level:
     org:
